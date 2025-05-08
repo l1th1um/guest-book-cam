@@ -13,37 +13,37 @@ const GuestBookForm: React.FC = () => {
     message: '',
     photo: null
   });
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'Nama harus diisi';
     }
-    
+
     if (!formData.graduationYear) {
-      newErrors.graduationYear = 'Graduation year is required';
+      newErrors.graduationYear = 'Tahun Lulus Harus Diisi';
     } else {
       const year = parseInt(formData.graduationYear, 10);
       if (isNaN(year) || year < 1900 || year > currentYear + 10) {
-        newErrors.graduationYear = 'Please enter a valid year';
+        newErrors.graduationYear = 'Masukkan tahun yang valid';
       }
     }
-    
+
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email harus diisi';
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Cek Kembali Email Anda';
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = 'Pesan dan Kesan harus diisi';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -56,14 +56,14 @@ const GuestBookForm: React.FC = () => {
       formData.message.trim()
     );
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
     });
-    
+
     if (errors[name as keyof FormErrors]) {
       setErrors({
         ...errors,
@@ -71,27 +71,27 @@ const GuestBookForm: React.FC = () => {
       });
     }
   };
-  
+
   const handlePhotoCapture = (photoDataUrl: string) => {
     setFormData({
       ...formData,
       photo: photoDataUrl || null
     });
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await queueEmail(formData);
       setIsSubmitted(true);
-      
+
       setTimeout(() => {
         setFormData({
           name: '',
@@ -108,7 +108,7 @@ const GuestBookForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   if (isSubmitted) {
     return (
       <div className="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-lg animate-fade-in">
@@ -116,15 +116,15 @@ const GuestBookForm: React.FC = () => {
           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
             <Send className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Terima Kasih!</h2>
           <p className="text-gray-600 mb-4">
-            Your guest book entry has been submitted successfully.
+            Pesan anda telah kami simpan. Terima Kasih
           </p>
           {formData.photo && (
             <div className="mt-6 inline-block">
-              <img 
-                src={formData.photo} 
-                alt="Your photo" 
+              <img
+                src={formData.photo}
+                alt="Your photo"
                 className="h-32 w-auto rounded-lg shadow-md mx-auto"
               />
             </div>
@@ -133,25 +133,21 @@ const GuestBookForm: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className="w-full max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden"
     >
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-5/12 p-8 bg-white">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Guest Book Entry
-          </h2>
-          
           <div className="space-y-5">
             <div>
-              <label 
-                htmlFor="name" 
+              <label
+                htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Full Name
+                Nama
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -166,20 +162,20 @@ const GuestBookForm: React.FC = () => {
                   className={`block w-full pl-10 pr-3 py-2 rounded-lg border ${
                     errors.name ? 'border-red-300' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder="John Doe"
+                  placeholder="Asep Gorbachev"
                 />
               </div>
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
             </div>
-            
+
             <div>
-              <label 
-                htmlFor="graduationYear" 
+              <label
+                htmlFor="graduationYear"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Graduation Year
+                Tahun Lulus
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -203,13 +199,13 @@ const GuestBookForm: React.FC = () => {
                 <p className="mt-1 text-sm text-red-600">{errors.graduationYear}</p>
               )}
             </div>
-            
+
             <div>
-              <label 
-                htmlFor="email" 
+              <label
+                htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email Address
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -224,7 +220,7 @@ const GuestBookForm: React.FC = () => {
                   className={`block w-full pl-10 pr-3 py-2 rounded-lg border ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder="john@example.com"
+                  placeholder="asep_gorbachev@gmail.com"
                 />
               </div>
               {errors.email && (
@@ -233,11 +229,11 @@ const GuestBookForm: React.FC = () => {
             </div>
 
             <div>
-              <label 
-                htmlFor="message" 
+              <label
+                htmlFor="message"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Your Message
+                Pesan dan Kesan
               </label>
               <textarea
                 id="message"
@@ -248,13 +244,13 @@ const GuestBookForm: React.FC = () => {
                 className={`block w-full px-3 py-2 rounded-lg border ${
                   errors.message ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                placeholder="Share your thoughts or memories..."
+                placeholder="Berikan pesan dan kesanmu!"
               />
               {errors.message && (
                 <p className="mt-1 text-sm text-red-600">{errors.message}</p>
               )}
             </div>
-            
+
             <div className="pt-4">
               <button
                 type="submit"
@@ -276,13 +272,13 @@ const GuestBookForm: React.FC = () => {
                 ) : (
                   <>
                     <Send className="mr-2 h-5 w-5" />
-                    Submit Entry
+                    Kirim
                   </>
                 )}
               </button>
               {!isFormFilled() && (
                 <p className="mt-2 text-xs text-center text-gray-500">
-                  Please fill in all required fields to submit
+                  Isi semua isian form
                 </p>
               )}
             </div>
@@ -291,15 +287,12 @@ const GuestBookForm: React.FC = () => {
 
         <div className="w-full md:w-7/12 bg-gray-50 p-8 border-l border-gray-200">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Take Your Photo
+            Berikan senyum terbaikmu
           </h3>
           <WebcamCapture
             onCapture={handlePhotoCapture}
             photoDataUrl={formData.photo}
           />
-          <p className="text-sm text-gray-500 mt-2">
-            Taking a photo is optional but helps us remember your visit!
-          </p>
         </div>
       </div>
     </form>

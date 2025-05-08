@@ -73,7 +73,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl }
         ) : (
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-50">
             <Camera size={48} className="text-gray-400 mb-3" />
-            <p className="text-gray-600 mb-4 text-center">Your photo will appear here</p>
+            <p className="text-gray-600 mb-4 text-center">Foto akan muncul disini</p>
             <button
               onClick={startCapture}
               className="py-2 px-4 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
