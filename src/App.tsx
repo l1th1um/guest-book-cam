@@ -4,7 +4,12 @@ import { GraduationCap } from 'lucide-react';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)), url('https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg')`,
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4 py-12">
         <header className="text-center mb-10">
           <div className="inline-flex items-center justify-center bg-blue-600 text-white p-3 rounded-full mb-4">
