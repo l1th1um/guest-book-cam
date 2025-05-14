@@ -182,17 +182,14 @@ const GuestBookForm: React.FC = () => {
                   <Calendar className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="number"
+                  type="text"
                   id="graduationYear"
                   name="graduationYear"
                   value={formData.graduationYear}
                   onChange={handleInputChange}
-                  min="1900"
-                  max={currentYear + 10}
                   className={`block w-full pl-10 pr-3 py-2 rounded-lg border ${
                     errors.graduationYear ? 'border-red-300' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder={currentYear.toString()}
                 />
               </div>
               {errors.graduationYear && (
