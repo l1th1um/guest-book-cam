@@ -289,6 +289,7 @@ const GuestBookForm: React.FC = () => {
           <WebcamCapture
             onCapture={handlePhotoCapture}
             photoDataUrl={formData.photo}
+            isFormFilled={isFormFilled()}
           />
         </div>
       </div>
