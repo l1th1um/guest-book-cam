@@ -31,11 +31,11 @@ export const queueEmail = async (guestEntry: GuestEntry): Promise<void> => {
     subject: `New Guest Book Entry: ${guestEntry.name}`,
     body: `
       New guest book entry:
-      
+
       Name: ${guestEntry.name}
-      Graduation Year: ${guestEntry.graduationYear}
+      Graduation Year: ${guestEntry.tahun_lulus}
       Email: ${guestEntry.email}
-      
+
       A photo has been attached to this email.
     `,
     attachments: [
@@ -55,7 +55,7 @@ export const queueEmail = async (guestEntry: GuestEntry): Promise<void> => {
   // In a real application, a background process or worker would process this queue
   // For this demo, we'll just log it and simulate a delay
   console.log('Email added to queue:', email);
-  
+
   // Simulate sending delay
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -64,7 +64,7 @@ export const queueEmail = async (guestEntry: GuestEntry): Promise<void> => {
       if (emailIndex !== -1) {
         emailQueue[emailIndex].status = 'sent';
       }
-      
+
       console.log('Email sent:', email);
       resolve();
     }, 1500); // Simulate 1.5 second delay

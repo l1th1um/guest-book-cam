@@ -28,7 +28,7 @@ function App() {
           <GuestBookForm />
         </main>
 
-        <footer className="mt-16 text-center text-gray-500 text-sm">
+        <footer className="mt-16 text-center text-white text-sm">
           <p>© {new Date().getFullYear()} IKASA.</p>
         </footer>
       </div>

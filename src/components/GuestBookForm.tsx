@@ -8,7 +8,7 @@ const GuestBookForm: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const [formData, setFormData] = useState<GuestEntry>({
     name: '',
-    graduationYear: '',
+    tahun_lulus: '',
     email: '',
     message: '',
     photo: null
@@ -23,15 +23,6 @@ const GuestBookForm: React.FC = () => {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Nama harus diisi';
-    }
-
-    if (!formData.graduationYear) {
-      newErrors.graduationYear = 'Tahun Lulus Harus Diisi';
-    } else {
-      const year = parseInt(formData.graduationYear, 10);
-      if (isNaN(year) || year < 1900 || year > currentYear + 10) {
-        newErrors.graduationYear = 'Masukkan tahun yang valid';
-      }
     }
 
     if (!formData.email.trim()) {
@@ -55,7 +46,7 @@ const GuestBookForm: React.FC = () => {
   const isFormFilled = (): boolean => {
     return !!(
       formData.name.trim() &&
-      formData.graduationYear.trim() &&
+      formData.tahun_lulus.trim() &&
       formData.email.trim() &&
       formData.message.trim()
     );
@@ -98,7 +89,7 @@ const GuestBookForm: React.FC = () => {
 
     try {
       // Send data to the API
-      const response = await fetch('https://ikasa-bdg.com/guestbook', {
+      const response = await fetch('https://ikasa-bdg.com/api/guestbook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +108,7 @@ const GuestBookForm: React.FC = () => {
       setTimeout(() => {
         setFormData({
           name: '',
-          graduationYear: '',
+          tahun_lulus: '',
           email: '',
           message: '',
           photo: null
@@ -198,7 +189,7 @@ const GuestBookForm: React.FC = () => {
 
             <div>
               <label
-                htmlFor="graduationYear"
+                htmlFor="tahun_lulus"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Tahun Lulus
@@ -209,17 +200,17 @@ const GuestBookForm: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  id="graduationYear"
-                  name="graduationYear"
-                  value={formData.graduationYear}
+                  id="tahun_lulus"
+                  name="tahun_lulus"
+                  value={formData.tahun_lulus}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-3 py-2 rounded-lg border ${
-                    errors.graduationYear ? 'border-red-300' : 'border-gray-300'
+                    errors.tahun_lulus ? 'border-red-300' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 />
               </div>
-              {errors.graduationYear && (
-                <p className="mt-1 text-sm text-red-600">{errors.graduationYear}</p>
+              {errors.tahun_lulus && (
+                <p className="mt-1 text-sm text-red-600">{errors.tahun_lulus}</p>
               )}
             </div>
 
@@ -301,7 +292,7 @@ const GuestBookForm: React.FC = () => {
               </button>
               {!isFormComplete() && (
                 <p className="mt-2 text-xs text-center text-gray-500">
-                  {!formData.photo ? 'Please take a photo' : 'Fill all required fields'}
+                  {!formData.photo ? ' ' : 'Isi formulir terlebih dahulu'}
                 </p>
               )}
               {errors.submit && (

@@ -1,6 +1,6 @@
 export interface GuestEntry {
   name: string;
-  graduationYear: string;
+  tahun_lulus: string;
   email: string;
   message: string;
   photo: string | null;
@@ -8,7 +8,7 @@ export interface GuestEntry {
 
 export interface FormErrors {
   name?: string;
-  graduationYear?: string;
+  tahun_lulus?: string;
   email?: string;
   message?: string;
   photo?: string;

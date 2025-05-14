@@ -50,13 +50,13 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
           canvas.width = img.width;
           canvas.height = img.height;
           const ctx = canvas.getContext('2d');
-          
+
           if (ctx) {
             // Set maximum quality rendering
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0);
-            
+
             // Get the highest quality image
             const highQualityImage = canvas.toDataURL('image/jpeg', 1.0);
             onCapture(highQualityImage);
@@ -125,9 +125,9 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
           </>
         ) : photoDataUrl ? (
           <div className="relative">
-            <img 
-              src={photoDataUrl} 
-              alt="Captured" 
+            <img
+              src={photoDataUrl}
+              alt="Captured"
               className="w-full h-auto rounded-lg"
               style={{ imageRendering: 'high-quality' }}
             />
@@ -136,7 +136,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
               className="absolute bottom-4 right-4 p-2 bg-white text-blue-500 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300 flex items-center gap-1"
               aria-label="Retake photo"
             >
-              <RotateCw size={18} /> Retake
+              <RotateCw size={18} /> Foto Lagi
             </button>
           </div>
         ) : (
@@ -151,14 +151,14 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                   : 'bg-blue-500 text-white hover:bg-blue-600'
               }`}
-              aria-label="Start camera"
+              aria-label="Mulai"
             >
               <Camera size={20} />
-              {isFormFilled ? 'Start Camera' : 'Fill form first'}
+              {isFormFilled ? 'Mulai' : 'Isi Form terlebih dahulu'}
             </button>
             {!isFormFilled && (
               <p className="text-sm text-gray-500 mt-2">
-                Please fill all required fields first
+                 Isi form terlebih dahulu sebelum menggunakan kamera.
               </p>
             )}
           </div>
@@ -167,7 +167,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
       {photoDataUrl && (
         <p className="text-green-600 mt-2 flex items-center">
           <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-          Photo captured successfully
+          Foto berhasil diambil
         </p>
       )}
     </div>
