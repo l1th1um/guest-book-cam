@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { Camera, RotateCw } from 'lucide-react';
-import { SelfieSegmentation } from '@mediapipe/selfie_segmentation';
+import { removeBackground } from '@imgly/background-removal';
 
 interface WebcamCaptureProps {
   onCapture: (photoDataUrl: string) => void;
@@ -14,8 +14,6 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const webcamRef = useRef<Webcam | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const selfieSegmentationRef = useRef<SelfieSegmentation | null>(null);
 
   const videoConstraints = {
     width: 1920,
@@ -25,29 +23,6 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
     frameRate: { ideal: 30, max: 60 },
     resizeMode: 'none'
   };
-
-  useEffect(() => {
-    const loadSegmentation = async () => {
-      const segmentation = new SelfieSegmentation({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
-      });
-
-      segmentation.setOptions({
-        modelSelection: 1,
-        selfieMode: true,
-      });
-
-      selfieSegmentationRef.current = segmentation;
-    };
-
-    loadSegmentation();
-
-    return () => {
-      if (selfieSegmentationRef.current) {
-        selfieSegmentationRef.current.close();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -61,59 +36,20 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
     };
   }, [countdown]);
 
-  const removeBackground = async (imageSrc: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = imageSrc;
-      img.onload = async () => {
-        if (!canvasRef.current || !selfieSegmentationRef.current) return;
-
-        const canvas = canvasRef.current;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Draw original image
-        ctx.drawImage(img, 0, 0);
-
-        // Get image data
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        
-        // Process with MediaPipe
-        selfieSegmentationRef.current.onResults((results) => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Create a new canvas for the background
-          const bgCanvas = document.createElement('canvas');
-          bgCanvas.width = canvas.width;
-          bgCanvas.height = canvas.height;
-          const bgCtx = bgCanvas.getContext('2d');
-          
-          if (bgCtx && results.segmentationMask) {
-            // Draw the segmentation mask
-            bgCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-            
-            // Get the mask data
-            const maskData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
-            
-            // Apply the mask to the original image
-            for (let i = 0; i < maskData.data.length; i += 4) {
-              imageData.data[i + 3] = maskData.data[i] * 255;
-            }
-          }
-          
-          // Draw the final image
-          ctx.putImageData(imageData, 0, 0);
-          
-          // Get the final image with transparent background
-          resolve(canvas.toDataURL('image/png'));
-        });
-
-        // Process the image
-        await selfieSegmentationRef.current.send({ image: img });
-      };
-    });
+  const processImage = async (imageSrc: string): Promise<string> => {
+    try {
+      const blob = await fetch(imageSrc).then(res => res.blob());
+      const processedBlob = await removeBackground(blob, {
+        debug: false,
+        progress: (progress) => {
+          console.log('Progress:', progress);
+        },
+      });
+      return URL.createObjectURL(processedBlob);
+    } catch (error) {
+      console.error('Error removing background:', error);
+      return imageSrc; // Fallback to original image
+    }
   };
 
   const capture = useCallback(async () => {
@@ -126,7 +62,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
       
       if (imageSrc) {
         try {
-          const processedImage = await removeBackground(imageSrc);
+          const processedImage = await processImage(imageSrc);
           onCapture(processedImage);
         } catch (error) {
           console.error('Error processing image:', error);
@@ -156,7 +92,6 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
 
   return (
     <div className="flex flex-col items-center mb-6 w-full">
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className="rounded-lg overflow-hidden shadow-md bg-white w-full max-w-md border-2 border-gray-200 relative">
         {isCapturing ? (
           <>
