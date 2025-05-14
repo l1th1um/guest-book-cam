@@ -14,9 +14,12 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
   const webcamRef = useRef<Webcam | null>(null);
 
   const videoConstraints = {
-    width: 720,
-    height: 540,
-    facingMode: "user"
+    width: 1920,
+    height: 1080,
+    facingMode: "user",
+    aspectRatio: 16/9,
+    frameRate: { ideal: 30, max: 60 },
+    resizeMode: 'none'
   };
 
   useEffect(() => {
@@ -33,11 +36,34 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
 
   const capture = useCallback(() => {
     if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
+      const imageSrc = webcamRef.current.getScreenshot({
+        width: 1920,
+        height: 1080
+      });
       if (imageSrc) {
-        onCapture(imageSrc);
-        setIsCapturing(false);
-        setCountdown(null);
+        // Create a new image to get the full resolution
+        const img = new Image();
+        img.src = imageSrc;
+        img.onload = () => {
+          // Create a canvas to maintain maximum quality
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            // Set maximum quality rendering
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0);
+            
+            // Get the highest quality image
+            const highQualityImage = canvas.toDataURL('image/jpeg', 1.0);
+            onCapture(highQualityImage);
+            setIsCapturing(false);
+            setCountdown(null);
+          }
+        };
       }
     }
   }, [webcamRef, onCapture]);
@@ -68,6 +94,10 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
                 screenshotFormat="image/jpeg"
                 videoConstraints={videoConstraints}
                 className="w-full h-auto rounded-lg"
+                imageSmoothing={true}
+                minScreenshotWidth={1920}
+                minScreenshotHeight={1080}
+                screenshotQuality={1}
               />
               {countdown !== null && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -95,7 +125,12 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
           </>
         ) : photoDataUrl ? (
           <div className="relative">
-            <img src={photoDataUrl} alt="Captured" className="w-full h-auto rounded-lg" />
+            <img 
+              src={photoDataUrl} 
+              alt="Captured" 
+              className="w-full h-auto rounded-lg"
+              style={{ imageRendering: 'high-quality' }}
+            />
             <button
               onClick={retake}
               className="absolute bottom-4 right-4 p-2 bg-white text-blue-500 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300 flex items-center gap-1"
