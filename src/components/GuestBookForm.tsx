@@ -44,6 +44,10 @@ const GuestBookForm: React.FC = () => {
       newErrors.message = 'Pesan dan Kesan harus diisi';
     }
 
+    if (!formData.photo) {
+      newErrors.photo = 'Photo is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -55,6 +59,10 @@ const GuestBookForm: React.FC = () => {
       formData.email.trim() &&
       formData.message.trim()
     );
+  };
+
+  const isFormComplete = (): boolean => {
+    return isFormFilled() && !!formData.photo;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -89,6 +97,20 @@ const GuestBookForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Send data to the API
+      const response = await fetch('https://ikasa-bdg.com/guestbook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      // Queue email after successful API submission
       await queueEmail(formData);
       setIsSubmitted(true);
 
@@ -104,6 +126,10 @@ const GuestBookForm: React.FC = () => {
       }, 5000);
     } catch (error) {
       console.error('Error submitting form:', error);
+      setErrors({
+        ...errors,
+        submit: 'Failed to submit form. Please try again.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -251,9 +277,9 @@ const GuestBookForm: React.FC = () => {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={isSubmitting || !isFormFilled()}
+                disabled={isSubmitting || !isFormComplete()}
                 className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                  isSubmitting || !isFormFilled()
+                  isSubmitting || !isFormComplete()
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
                 } transition-colors duration-300`}
@@ -273,10 +299,13 @@ const GuestBookForm: React.FC = () => {
                   </>
                 )}
               </button>
-              {!isFormFilled() && (
+              {!isFormComplete() && (
                 <p className="mt-2 text-xs text-center text-gray-500">
-                  Isi semua isian form
+                  {!formData.photo ? 'Please take a photo' : 'Fill all required fields'}
                 </p>
+              )}
+              {errors.submit && (
+                <p className="mt-2 text-sm text-center text-red-600">{errors.submit}</p>
               )}
             </div>
           </div>
