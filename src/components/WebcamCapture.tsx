@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { Camera, RotateCw } from 'lucide-react';
+import { SelfieSegmentation } from '@mediapipe/selfie_segmentation';
 
 interface WebcamCaptureProps {
   onCapture: (photoDataUrl: string) => void;
@@ -11,7 +12,10 @@ interface WebcamCaptureProps {
 const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, isFormFilled }) => {
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const webcamRef = useRef<Webcam | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selfieSegmentationRef = useRef<SelfieSegmentation | null>(null);
 
   const videoConstraints = {
     width: 1920,
@@ -21,6 +25,29 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
     frameRate: { ideal: 30, max: 60 },
     resizeMode: 'none'
   };
+
+  useEffect(() => {
+    const loadSegmentation = async () => {
+      const segmentation = new SelfieSegmentation({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+      });
+
+      segmentation.setOptions({
+        modelSelection: 1,
+        selfieMode: true,
+      });
+
+      selfieSegmentationRef.current = segmentation;
+    };
+
+    loadSegmentation();
+
+    return () => {
+      if (selfieSegmentationRef.current) {
+        selfieSegmentationRef.current.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -34,37 +61,82 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
     };
   }, [countdown]);
 
-  const capture = useCallback(() => {
+  const removeBackground = async (imageSrc: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = imageSrc;
+      img.onload = async () => {
+        if (!canvasRef.current || !selfieSegmentationRef.current) return;
+
+        const canvas = canvasRef.current;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Draw original image
+        ctx.drawImage(img, 0, 0);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Process with MediaPipe
+        selfieSegmentationRef.current.onResults((results) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Create a new canvas for the background
+          const bgCanvas = document.createElement('canvas');
+          bgCanvas.width = canvas.width;
+          bgCanvas.height = canvas.height;
+          const bgCtx = bgCanvas.getContext('2d');
+          
+          if (bgCtx && results.segmentationMask) {
+            // Draw the segmentation mask
+            bgCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+            
+            // Get the mask data
+            const maskData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Apply the mask to the original image
+            for (let i = 0; i < maskData.data.length; i += 4) {
+              imageData.data[i + 3] = maskData.data[i] * 255;
+            }
+          }
+          
+          // Draw the final image
+          ctx.putImageData(imageData, 0, 0);
+          
+          // Get the final image with transparent background
+          resolve(canvas.toDataURL('image/png'));
+        });
+
+        // Process the image
+        await selfieSegmentationRef.current.send({ image: img });
+      };
+    });
+  };
+
+  const capture = useCallback(async () => {
     if (webcamRef.current) {
+      setIsProcessing(true);
       const imageSrc = webcamRef.current.getScreenshot({
         width: 1920,
         height: 1080
       });
+      
       if (imageSrc) {
-        // Create a new image to get the full resolution
-        const img = new Image();
-        img.src = imageSrc;
-        img.onload = () => {
-          // Create a canvas to maintain maximum quality
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-
-          if (ctx) {
-            // Set maximum quality rendering
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0);
-
-            // Get the highest quality image
-            const highQualityImage = canvas.toDataURL('image/jpeg', 1.0);
-            onCapture(highQualityImage);
-            setIsCapturing(false);
-            setCountdown(null);
-          }
-        };
+        try {
+          const processedImage = await removeBackground(imageSrc);
+          onCapture(processedImage);
+        } catch (error) {
+          console.error('Error processing image:', error);
+          onCapture(imageSrc); // Fallback to original image if processing fails
+        }
       }
+      
+      setIsCapturing(false);
+      setCountdown(null);
+      setIsProcessing(false);
     }
   }, [webcamRef, onCapture]);
 
@@ -84,6 +156,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
 
   return (
     <div className="flex flex-col items-center mb-6 w-full">
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className="rounded-lg overflow-hidden shadow-md bg-white w-full max-w-md border-2 border-gray-200 relative">
         {isCapturing ? (
           <>
@@ -91,7 +164,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
               <Webcam
                 audio={false}
                 ref={webcamRef}
-                screenshotFormat="image/jpeg"
+                screenshotFormat="image/png"
                 videoConstraints={videoConstraints}
                 className="w-full h-auto rounded-lg"
                 imageSmoothing={true}
@@ -110,16 +183,16 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, photoDataUrl, 
             <div className="flex justify-center my-3">
               <button
                 onClick={startCountdown}
-                disabled={countdown !== null}
+                disabled={countdown !== null || isProcessing}
                 className={`py-2 px-4 rounded-full flex items-center gap-2 transition-colors duration-300 ${
-                  countdown !== null
+                  countdown !== null || isProcessing
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-blue-500 text-white hover:bg-blue-600'
                 }`}
                 aria-label="Take photo"
               >
                 <Camera size={20} />
-                {countdown !== null ? 'Taking photo...' : 'Take Photo'}
+                {isProcessing ? 'Processing...' : countdown !== null ? 'Taking photo...' : 'Take Photo'}
               </button>
             </div>
           </>
